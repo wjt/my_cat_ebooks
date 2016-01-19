@@ -1,0 +1,14 @@
+-f file:///home/wjt/.cache/pip/wheelhouse
+argh==0.26.1
+decorator==4.0.6
+ipython==4.0.3
+ipython-genutils==0.1.0
+nltk==3.1
+path.py==8.1.2
+Pattern==2.6
+pexpect==4.0.1
+pickleshare==0.6
+ptyprocess==0.5
+simplegeneric==0.8.1
+traitlets==4.1.0
+wheel==0.26.0
