@@ -142,7 +142,7 @@ def main():
         "[he:it][him:it][hes:it's]",
     ]
 
-    json.dump(fp=sys.stdout, indent=2, obj={
+    grammar = {
         "atrociously": adjly("atrocious"),
         "watermelon": fruits,
         "seven": "two three four five six seven eight nine ten eleven twelve".split(),
@@ -156,7 +156,10 @@ def main():
             for _ in xrange(weight)
         ],
         "origin": ["#[#setPronouns#][#setOccupation#]stanza#"],
-    })
+    }
+
+    with open('grammar.json', 'w') as f:
+        json.dump(fp=f, indent=2, obj=grammar)
 
 
 if __name__ == '__main__':
