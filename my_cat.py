@@ -5,6 +5,7 @@ import argh
 import json
 import os
 import sys
+import textwrap
 
 import pattern.en
 
@@ -12,7 +13,7 @@ from nltk.corpus import cmudict, wordnet
 cmu_pronounciations = cmudict.dict()
 
 
-stanzas = [
+stanza_weights = {
     # """my cat
     # cool cat
     # good cat
@@ -23,15 +24,20 @@ stanzas = [
     # my cat is everywhere
     # we watch him on TV""",
 
-    """my cat is amazing
-    #he# can play the guitar
-    #he# may not be an #actor#
-    but #hes# a pussy #superstar#""",
+    # TODO: needs a musical instrument corpus
+    # """my cat is amazing
+    # #he# can play the guitar
+
+    # TODO: ...and without it this isn't funny
+    # """#he# may not be an #actor#
+    # but #hes# a pussy #superstar#""",
 
     # """my cat is everywhere
     # sees what #he# can see
-    """#he# may not be an #actor#
-    #he# #acts# #atrociously#""",
+    """
+    #he# may not be an #actor#
+    #he# #acts# #atrociously#
+    """: 2,
 
     # """my cat isn't crazy
     # #he#'s everything to me
@@ -42,9 +48,11 @@ stanzas = [
     # #he# may not be picasso
     # but #he# is a work of art""",
 
-    """#he# can break my #arm# in #seven# places
-    #he# can eat a whole #watermelon#""",
-]
+    """
+    #he# can break my #arm# in #seven# places
+    #he# can eat a whole #watermelon#
+    """: 1,
+}
 
 
 def load_corpus(path):
@@ -94,8 +102,17 @@ def occupation_action(occupation):
         if related_lemma.synset().pos() == 'v'
     }
     if lemma_names:
-        best = max(lemma_names, key=lambda ln: common_prefix_length(ln, occupation))
-        return pattern.en.conjugate(best, person=3)
+        best = None
+        best_prefix_length = 0
+
+        for ln in lemma_names:
+            n = common_prefix_length(ln, occupation)
+            if ln != occupation and n > best_prefix_length:
+                best = ln
+                best_prefix_length = n
+
+        if best:
+            return pattern.en.conjugate(best, person=3)
 
 
 def occupations():
@@ -113,22 +130,31 @@ def main():
 
     fruits = load_corpus("foods/fruits.json")["fruits"]
 
+    pronouns = [
+        "[he:he][him:him][hes:he's]",
+        "[he:she][him:her][hes:she's]",
+        # TODO: reintroduce this, but it affects the conjugation of the occupation.
+        #
+        #   they may not be an cleaner
+        #   they cleanses exultantly
+        #
+        # "[he:they][him:them][hes:they're]",
+        "[he:it][him:it][hes:it's]",
+    ]
+
     json.dump(fp=sys.stdout, indent=2, obj={
         "atrociously": adjly("atrocious"),
         "watermelon": fruits,
         "seven": "two three four five six seven eight nine ten eleven twelve".split(),
         "arm": load_corpus("humans/bodyParts.json")["bodyParts"],
         "superstar": [ln for s in wordnet.synsets('superstar') for ln in s.lemma_names()],
-
-        "setPronouns": [
-            "[he:he][him:him][hes:he's]",
-            "[he:she][him:her][hes:she's]",
-            "[he:they][him:them][hes:they're]",
-            "[he:it][him:it][hes:it's]",
-        ],
+        "setPronouns": pronouns,
         "setOccupation": occupations(),
-
-        "stanza": [s for s in stanzas if '#' in s],
+        "stanza": [
+            textwrap.dedent(s).strip()
+            for s, weight in stanza_weights.iteritems()
+            for _ in xrange(weight)
+        ],
         "origin": ["#[#setPronouns#][#setOccupation#]stanza#"],
     })
 
