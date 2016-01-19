@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals, print_function, division
 
-import argh
 import json
 import os
 import sys
@@ -163,4 +162,4 @@ def main():
 
 
 if __name__ == '__main__':
-    argh.dispatch_command(main)
+    main()
