@@ -207,7 +207,7 @@ def main():
 
     log.info('writing grammar')
     with open('grammar.json', 'w') as f:
-        json.dump(fp=f, indent=2, obj=grammar)
+        json.dump(fp=f, indent=2, obj=grammar, sort_keys=True)
 
 
 if __name__ == '__main__':
