@@ -5,11 +5,15 @@ import json
 import os
 import sys
 import textwrap
+import logging
 
 import pattern.en
 
 from nltk.corpus import cmudict, wordnet
-cmu_pronounciations = cmudict.dict()
+
+log = logging.getLogger(__name__)
+
+cmu_pronounciations = None
 
 
 stanza_weights = {
@@ -23,13 +27,12 @@ stanza_weights = {
     # my cat is everywhere
     # we watch him on TV""",
 
-    # TODO: needs a musical instrument corpus
-    # """my cat is amazing
-    # #he# can play the guitar
-
-    # TODO: ...and without it this isn't funny
-    # """#he# may not be an #actor#
-    # but #hes# a pussy #superstar#""",
+    """
+    my cat is #amazing#
+    #he# can play the #guitar#
+    #he# may not be an #actor#
+    but #hes# a pussy #superstar#
+    """: 2,
 
     # """my cat is everywhere
     # sees what #he# can see
@@ -75,6 +78,7 @@ def matching_stresses(word, wordlist):
 
 
 def adjly(word):
+    log.info('adjly(%r)', word)
     wordlist = load_corpus("words/adjs.json")["adjs"]
     adjs = matching_stresses(word, wordlist)
     adjlys = [adj + "ly" for adj in adjs]
@@ -115,6 +119,7 @@ def occupation_action(occupation):
 
 
 def occupations():
+    log.info('occupations')
     occs = load_corpus("humans/occupations.json")["occupations"]
     actions = map(occupation_action, occs)
     return [
@@ -124,10 +129,51 @@ def occupations():
     ]
 
 
+def flatten(xs):
+    for x in xs:
+        if isinstance(x, list):
+            for y in flatten(x):
+                yield y
+        else:
+            yield x
+
+
+def instruments():
+    log.info('instruments')
+    tree = wordnet.synset('musical_instrument.n.01').tree(lambda x: x.hyponyms())
+    children = list(flatten(tree[1:]))
+    return list(
+        name for name in {
+            lemma.name().replace('_', ' ')
+            for child in children
+            for lemma in child.lemmas()
+        }
+        if 'instrument' not in name and 'woodwind' not in name and name != 'wind'
+    )
+
+
 def main():
     '''Generates the tracery grammar for @my_cat_ebooks.'''
+    logging.basicConfig(
+        level='INFO',
+        format='%(asctime)s %(levelname)8s [%(name)s] %(message)s',
+    )
 
+    log.info('Loading CMU pronounciation dictionary')
+    global cmu_pronounciations
+    cmu_pronounciations = cmudict.dict()
+
+    log.info('fruits')
     fruits = load_corpus("foods/fruits.json")["fruits"]
+
+    log.info('body parts')
+    body_parts = load_corpus("humans/bodyParts.json")["bodyParts"]
+
+    log.info('amazing')
+    amazing = load_corpus("words/encouraging_words.json")["encouraging_words"]
+
+    log.info('superstar')
+    superstar = [ln for s in wordnet.synsets('superstar') for ln in s.lemma_names()]
 
     pronouns = [
         "[he:he][him:him][hes:he's]",
@@ -145,8 +191,10 @@ def main():
         "atrociously": adjly("atrocious"),
         "watermelon": fruits,
         "seven": "two three four five six seven eight nine ten eleven twelve".split(),
-        "arm": load_corpus("humans/bodyParts.json")["bodyParts"],
-        "superstar": [ln for s in wordnet.synsets('superstar') for ln in s.lemma_names()],
+        "arm": body_parts,
+        "amazing": amazing,
+        "guitar": instruments(),
+        "superstar": superstar,
         "setPronouns": pronouns,
         "setOccupation": occupations(),
         "stanza": [
@@ -157,6 +205,7 @@ def main():
         "origin": ["#[#setPronouns#][#setOccupation#]stanza#"],
     }
 
+    log.info('writing grammar')
     with open('grammar.json', 'w') as f:
         json.dump(fp=f, indent=2, obj=grammar)
 
