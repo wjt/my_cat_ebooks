@@ -6,7 +6,7 @@ Leans heavily on the following libraries and corpora:
 * pattern: BSD
 * nltk: Apache 2
 * wordnet: [BSD-style](http://wordnet.princeton.edu/wordnet/license/)
-* cmudict: BSD
+* The Carnegie Mellon Pronouncing Dictionary (cmudict): “Use of this dictionary, for any research or commercial purpose, is completely unrestricted. If you use or redistribute this material, we would appreciate acknowlegement of its origin.”
 
 The [tweets](//twitter.com/my_cat_ebooks) are posted by [Cheap Bots, Done
 Quick](http://cheapbotsdonequick.com/).
